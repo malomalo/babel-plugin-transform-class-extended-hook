@@ -18,8 +18,8 @@
     "mocha": "^5.2.0"
   },
   "scripts": {
-    "test": "npm run compile && npx mocha -r @babel/register 'test/mocha/suite.js'",
-    "compile": "npx babel src/index.js --out-file dist/index.js"
+    "test": "npm run prepublishOnly && npx mocha -r @babel/register 'test/mocha/suite.js'",
+    "prepublishOnly": "npx babel src/index.js --out-file dist/index.js"
   },
   "keywords": [
     "babel-plugin",

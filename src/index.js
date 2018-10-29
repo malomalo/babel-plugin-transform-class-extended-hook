@@ -1,4 +1,5 @@
 import template from "@babel/template";
+import traverse from '@babel/traverse';
 
 export default function({ types: t }) {
     let SKIP = Symbol();
@@ -49,20 +50,35 @@ export default function({ types: t }) {
         var CHILD = path.scope.generateUidIdentifier(childClassName);
         var PARENT = path.node.superClass;
         var CHILD_NAME = childClassName ? t.stringLiteral(childClassName) : t.identifier("undefined");
+        var binding = path.scope.getBinding(childClassName);
         
         if (PARENT.type === 'Identifier') {
             var CLASS_EXPRESSION = t.classExpression(
-              null,
+              CHILD,
               PARENT,
               path.node.body,
               path.node.decorators || []
             );
+
+            traverse(CLASS_EXPRESSION, {
+                Identifier({ node }, state) {
+                    if (node.name === childClassName) {
+                        node.name = CHILD.name;
+                    }
+                },
+                Scope(path, state) {
+                    if ( !path.scope.bindingIdentifierEquals(childClassName, binding.identifier) ) {
+                        path.skip();
+                    }
+                }
+            }, path.scope);
+            
             // Don't transform *this* class expression, or we'll loop forever
             CLASS_EXPRESSION[SKIP] = true;
             
             return template(`
                 (function(){
-                  var CHILD = CLASS_EXPRESSION;
+                  CLASS_EXPRESSION;
                   return __babelPluginTransformClassExtendedHook(CHILD, PARENT, CHILD_NAME);
                 })();
               `)({
@@ -74,18 +90,32 @@ export default function({ types: t }) {
         } else {
             var PARENTID = path.scope.generateUidIdentifier('parent');
             var CLASS_EXPRESSION = t.classExpression(
-              null,
+              CHILD,
               PARENTID,
               path.node.body,
               path.node.decorators || []
             );
+            
+            traverse(CLASS_EXPRESSION, {
+                Identifier({ node }, state) {
+                    if (node.name === childClassName) {
+                        node.name = CHILD.name;
+                    }
+                },
+                Scope(path, state) {
+                    if ( !path.scope.bindingIdentifierEquals(childClassName, binding.identifier) ) {
+                        path.skip();
+                    }
+                }
+            }, path.scope);
+            
             // Don't transform *this* class expression, or we'll loop forever
             CLASS_EXPRESSION[SKIP] = true;
 
             return template(`
                 (function(){
                     var PARENTID = PARENT;
-                    var CHILD = CLASS_EXPRESSION;
+                    CLASS_EXPRESSION;
                     return __babelPluginTransformClassExtendedHook(CHILD, PARENTID, CHILD_NAME);
                 })();
               `)({
