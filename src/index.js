@@ -53,7 +53,7 @@ export default function({ types: t }) {
         var binding = path.scope.getBinding(childClassName);
         
         if (PARENT.type === 'Identifier') {
-            var CLASS_EXPRESSION = t.classExpression(
+            var CLASS_EXPRESSION = t.classDeclaration(
               CHILD,
               PARENT,
               path.node.body,
@@ -89,7 +89,7 @@ export default function({ types: t }) {
             });
         } else {
             var PARENTID = path.scope.generateUidIdentifier('parent');
-            var CLASS_EXPRESSION = t.classExpression(
+            var CLASS_EXPRESSION = t.classDeclaration(
               CHILD,
               PARENTID,
               path.node.body,
